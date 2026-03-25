@@ -33,11 +33,6 @@ Keep strict layering so tests never call raw HTTP requests directly.
 - API documentation source analyzed: https://restful-booker.herokuapp.com/apidoc/index.html
 - Extracted endpoint contract and mapped to typed interfaces in `src/types/booking.types.ts`.
 
-### MCP note
-
-- Equivalent exploration can be done with Playwright MCP for endpoint behavior checks and payload experimentation.
-- This repository keeps a manual analysis trail in code (`types`, `services`, and tests) for reproducibility.
-
 ## 3) Automated Healing Example
 
 ### Failure Pattern
