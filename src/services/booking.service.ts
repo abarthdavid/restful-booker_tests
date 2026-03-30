@@ -2,6 +2,7 @@ import { APIResponse } from '@playwright/test';
 import { IHttpClient } from './http-client';
 import { Booking, BookingFilter, PartialBooking } from '../types/booking.types';
 import { ENDPOINTS } from '../config/api.config';
+import { DEFAULT_HEADERS } from '@/constants/headers';
 
 /**
  * BookingService abstracts all booking-related API calls.
@@ -70,8 +71,7 @@ export class BookingService {
   async createBookingMalformedJson(rawMalformedJson: string): Promise<APIResponse> {
     return this.client.post(ENDPOINTS.booking, {
       headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
+        ...DEFAULT_HEADERS,
       },
       data: rawMalformedJson,
     });
@@ -84,8 +84,7 @@ export class BookingService {
     return this.client.put(ENDPOINTS.bookingById(id), {
       headers: {
         ...this.authHeaders,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
+        ...DEFAULT_HEADERS,
       },
       data: booking,
     });
@@ -98,8 +97,7 @@ export class BookingService {
     return this.client.put(ENDPOINTS.bookingById(id), {
       headers: {
         Cookie: `token=${token}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
+        ...DEFAULT_HEADERS,
       },
       data: booking,
     });
@@ -116,8 +114,7 @@ export class BookingService {
     return this.client.put(ENDPOINTS.bookingById(id), {
       headers: {
         Authorization: basicAuthHeader,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
+        ...DEFAULT_HEADERS,
       },
       data: booking,
     });
@@ -130,8 +127,7 @@ export class BookingService {
     return this.client.patch(ENDPOINTS.bookingById(id), {
       headers: {
         ...this.authHeaders,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
+        ...DEFAULT_HEADERS,
       },
       data: partial,
     });

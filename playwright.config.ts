@@ -1,4 +1,5 @@
 import { defineConfig } from '@playwright/test';
+import { DEFAULT_HEADERS } from '@/constants/headers';
 
 const allureEnvironmentInfo = {
   API_BASE_URL: 'https://restful-booker.herokuapp.com',
@@ -32,8 +33,7 @@ export default defineConfig({
     baseURL: 'https://restful-booker.herokuapp.com',
     trace: 'retain-on-failure',
     extraHTTPHeaders: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
+      ...DEFAULT_HEADERS,
     },
   },
   timeout: 30000,

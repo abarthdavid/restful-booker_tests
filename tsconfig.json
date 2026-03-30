@@ -15,6 +15,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["src/**/*", "tests/**/*", "playwright.config.ts"],
+  "include": ["src/**/*", "tests/**/*", "playwright.config.ts", "constants/**/*"],
   "exclude": ["node_modules", "dist", "allure-results", "allure-report"]
 }
