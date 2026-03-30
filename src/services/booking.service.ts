@@ -3,6 +3,7 @@ import { IHttpClient } from './http-client';
 import { Booking, BookingFilter, PartialBooking } from '../types/booking.types';
 import { ENDPOINTS } from '../config/api.config';
 import { DEFAULT_HEADERS } from '@/constants/headers';
+import { toQueryParams } from '../utils/query-params';
 
 /**
  * BookingService abstracts all booking-related API calls.
@@ -29,14 +30,8 @@ export class BookingService {
    * Returns all booking IDs, optionally filtered by query parameters.
    */
   async getBookingIds(filter?: BookingFilter): Promise<APIResponse> {
-    const params: Record<string, string> = {};
-    if (filter?.firstname) params['firstname'] = filter.firstname;
-    if (filter?.lastname) params['lastname'] = filter.lastname;
-    if (filter?.checkin) params['checkin'] = filter.checkin;
-    if (filter?.checkout) params['checkout'] = filter.checkout;
-
     return this.client.get(ENDPOINTS.booking, {
-      params: Object.keys(params).length > 0 ? params : undefined,
+      params: toQueryParams(filter),
     });
   }
 
