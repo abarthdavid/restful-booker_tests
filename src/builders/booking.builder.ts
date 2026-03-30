@@ -1,60 +1,69 @@
 import { Booking, BookingDates } from '../types/booking.types';
 
+const createDefaultBooking = (): Booking => ({
+  firstname: 'John',
+  lastname: 'Doe',
+  totalprice: 100,
+  depositpaid: true,
+  bookingdates: {
+    checkin: '2025-01-01',
+    checkout: '2025-01-07',
+  },
+});
+
 /**
  * BookingBuilder implements the Builder pattern to construct Booking objects
  * with a fluent API. This provides fine-grained control over test data
  * and makes test intent explicit.
  */
 export class BookingBuilder {
-  private booking: Booking = {
-    firstname: 'John',
-    lastname: 'Doe',
-    totalprice: 100,
-    depositpaid: true,
-    bookingdates: {
-      checkin: '2025-01-01',
-      checkout: '2025-01-07',
-    },
-  };
+  constructor(private readonly booking: Booking = createDefaultBooking()) {}
+
+  private cloneWith(update: Partial<Booking>): BookingBuilder {
+    return new BookingBuilder({
+      ...this.booking,
+      ...update,
+      bookingdates: {
+        ...this.booking.bookingdates,
+        ...(update.bookingdates ?? {}),
+      },
+    });
+  }
 
   withFirstName(firstname: string): this {
-    this.booking.firstname = firstname;
-    return this;
+    return this.cloneWith({ firstname }) as this;
   }
 
   withLastName(lastname: string): this {
-    this.booking.lastname = lastname;
-    return this;
+    return this.cloneWith({ lastname }) as this;
   }
 
   withTotalPrice(totalprice: number): this {
-    this.booking.totalprice = totalprice;
-    return this;
+    return this.cloneWith({ totalprice }) as this;
   }
 
   withDepositPaid(depositpaid: boolean): this {
-    this.booking.depositpaid = depositpaid;
-    return this;
+    return this.cloneWith({ depositpaid }) as this;
   }
 
   withBookingDates(dates: BookingDates): this {
-    this.booking.bookingdates = dates;
-    return this;
+    return this.cloneWith({ bookingdates: dates }) as this;
   }
 
   withCheckinDate(checkin: string): this {
-    this.booking.bookingdates.checkin = checkin;
-    return this;
+    return this.cloneWith({
+      bookingdates: { checkin, checkout: this.booking.bookingdates.checkout },
+    }) as this;
   }
 
   withCheckoutDate(checkout: string): this {
-    this.booking.bookingdates.checkout = checkout;
-    return this;
+    return this.cloneWith({
+      bookingdates: { checkin: this.booking.bookingdates.checkin, checkout },
+    }) as this;
   }
 
   withAdditionalNeeds(additionalneeds: string): this {
-    this.booking.additionalneeds = additionalneeds;
-    return this;
+    return this.cloneWith({ additionalneeds }) as this;
   }
 
   build(): Booking {
