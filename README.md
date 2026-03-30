@@ -50,6 +50,13 @@ restful-booker/
 npm install
 ```
 
+Create environment variables for authentication credentials:
+
+$env:AUTH_USERNAME
+$env:AUTH_PASSWORD
+
+You can also create a local `.env` file. Keep it out of git.
+
 ## Running Tests
 
 ```bash
@@ -92,6 +99,11 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs:
 2. **Test job** — Playwright API tests (pipeline fails if any tests fail)
 3. **Allure report job** — Generates Allure HTML report and uploads as artifact
 
+Required GitHub repository secrets for CI test execution:
+
+- `AUTH_USERNAME`
+- `AUTH_PASSWORD`
+
 ## API Endpoints Covered
 
 | Method | Endpoint       | Description                                 |
@@ -108,4 +120,4 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs:
 ## Authentication Methods
 
 - **Token** (`Cookie: token=<value>`) — obtained via `/auth` endpoint
-- **Basic Auth** (`Authorization: Basic <base64>`) — `admin:password123`
+- **Basic Auth** (`Authorization: Basic <base64>`) — from `AUTH_USERNAME` and `AUTH_PASSWORD` environment variables

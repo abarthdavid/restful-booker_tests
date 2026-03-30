@@ -6,3 +6,5 @@ playwright-report/
 node_modules/
 .husky
 test-results/
+.env
+.env.*
