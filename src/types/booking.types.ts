@@ -8,6 +8,7 @@ export interface BookingDates {
 }
 
 export interface Booking {
+  bookingid: number;
   firstname: string;
   lastname: string;
   totalprice: number;

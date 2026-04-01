@@ -2,6 +2,13 @@ import { allure } from 'allure-playwright';
 import { test, expect } from '../src/fixtures/test.fixture';
 import { BookingFactory } from '../src/factories/booking.factory';
 import { BookingResponse, BookingId, Booking } from '../src/types/booking.types';
+import { deleteBookingById, createBooking } from '../src/utils/booking.helper';
+import {
+  createBookingWithPayload,
+  expectStatusAndParseJson,
+  expectBookingIdsToContain,
+  expectBookingToMatch,
+} from '../src/utils/booking.assertion';
 
 test.describe('Booking - Health Check (Ping)', () => {
   test('should return 201 on health check ping', async ({ bookingService }) => {
@@ -43,20 +50,16 @@ test.describe('Booking - GetBookingIds', () => {
     await allure.severity('normal');
 
     // Create a booking with a known first name
-    const booking = BookingFactory.createDefault();
-    const createResponse = await bookingService.createBooking(booking);
-    expect(createResponse.status()).toBe(200);
-    const created = (await createResponse.json()) as BookingResponse;
+    const { booking, created } = await createBooking(bookingService);
 
     const filterResponse = await bookingService.getBookingIds({
       firstname: booking.firstname,
     });
-    expect(filterResponse.status()).toBe(200);
-    const ids = (await filterResponse.json()) as BookingId[];
-    expect(ids.some((b) => b.bookingid === created.bookingid)).toBe(true);
+    const ids = await expectStatusAndParseJson<BookingId[]>(filterResponse, 200);
+    expectBookingIdsToContain(ids, created.bookingid);
 
     // Cleanup
-    await authenticatedBookingService.deleteBooking(created.bookingid);
+    await deleteBookingById(authenticatedBookingService, created.bookingid);
   });
 
   test('should filter booking IDs by lastname', async ({
@@ -66,19 +69,15 @@ test.describe('Booking - GetBookingIds', () => {
     await allure.story('Filter by lastname');
     await allure.severity('normal');
 
-    const booking = BookingFactory.createDefault();
-    const createResponse = await bookingService.createBooking(booking);
-    expect(createResponse.status()).toBe(200);
-    const created = (await createResponse.json()) as BookingResponse;
+    const { booking, created } = await createBooking(bookingService);
 
     const filterResponse = await bookingService.getBookingIds({
       lastname: booking.lastname,
     });
-    expect(filterResponse.status()).toBe(200);
-    const ids = (await filterResponse.json()) as BookingId[];
-    expect(ids.some((b) => b.bookingid === created.bookingid)).toBe(true);
+    const ids = await expectStatusAndParseJson<BookingId[]>(filterResponse, 200);
+    expectBookingIdsToContain(ids, created.bookingid);
 
-    await authenticatedBookingService.deleteBooking(created.bookingid);
+    await deleteBookingById(authenticatedBookingService, created.bookingid);
   });
 });
 
@@ -95,23 +94,13 @@ test.describe('Booking - GetBooking', () => {
     await allure.story('Get booking by ID');
     await allure.severity('critical');
 
-    const booking = BookingFactory.createDefault();
-    const createResponse = await bookingService.createBooking(booking);
-    expect(createResponse.status()).toBe(200);
-    const created = (await createResponse.json()) as BookingResponse;
+    const { booking, created } = await createBooking(bookingService);
 
     const getResponse = await bookingService.getBookingById(created.bookingid);
-    expect(getResponse.status()).toBe(200);
+    const fetched = await expectStatusAndParseJson<Booking>(getResponse, 200);
+    expectBookingToMatch(fetched, booking);
 
-    const fetched = (await getResponse.json()) as Booking;
-    expect(fetched.firstname).toBe(booking.firstname);
-    expect(fetched.lastname).toBe(booking.lastname);
-    expect(fetched.totalprice).toBe(booking.totalprice);
-    expect(fetched.depositpaid).toBe(booking.depositpaid);
-    expect(fetched.bookingdates.checkin).toBe(booking.bookingdates.checkin);
-    expect(fetched.bookingdates.checkout).toBe(booking.bookingdates.checkout);
-
-    await authenticatedBookingService.deleteBooking(created.bookingid);
+    await deleteBookingById(authenticatedBookingService, created.bookingid);
   });
 
   test('should return 404 for a non-existent booking ID', async ({ bookingService }) => {
@@ -142,15 +131,10 @@ test.describe('Booking - CreateBooking', () => {
     await allure.parameter('totalprice', String(booking.totalprice));
 
     const response = await bookingService.createBooking(booking);
-    expect(response.status()).toBe(200);
-
-    const body = (await response.json()) as BookingResponse;
+    const body = await expectStatusAndParseJson<BookingResponse>(response, 200);
     expect(body).toHaveProperty('bookingid');
     expect(typeof body.bookingid).toBe('number');
-    expect(body.booking.firstname).toBe(booking.firstname);
-    expect(body.booking.lastname).toBe(booking.lastname);
-    expect(body.booking.totalprice).toBe(booking.totalprice);
-    expect(body.booking.depositpaid).toBe(booking.depositpaid);
+    expectBookingToMatch(body.booking, booking);
 
     await authenticatedBookingService.deleteBooking(body.bookingid);
   });
@@ -166,10 +150,8 @@ test.describe('Booking - CreateBooking', () => {
     const ids: number[] = [];
 
     for (const booking of bookings) {
-      const response = await bookingService.createBooking(booking);
-      expect(response.status()).toBe(200);
-      const body = (await response.json()) as BookingResponse;
-      ids.push(body.bookingid);
+      const bookingId = await createBookingWithPayload(bookingService, booking);
+      ids.push(bookingId);
     }
 
     // All IDs should be unique
@@ -197,9 +179,7 @@ test.describe('Booking - UpdateBooking (PUT)', () => {
     await allure.severity('critical');
 
     const original = BookingFactory.createDefault();
-    const createResponse = await bookingService.createBooking(original);
-    expect(createResponse.status()).toBe(200);
-    const { bookingid } = (await createResponse.json()) as BookingResponse;
+    const bookingid = await createBookingWithPayload(bookingService, original);
 
     const updated = BookingFactory.createUpdate();
     const updateResponse = await authenticatedBookingService.updateBooking(bookingid, updated);
@@ -221,9 +201,7 @@ test.describe('Booking - UpdateBooking (PUT)', () => {
     await allure.severity('normal');
 
     const original = BookingFactory.createDefault();
-    const createResponse = await bookingService.createBooking(original);
-    expect(createResponse.status()).toBe(200);
-    const { bookingid } = (await createResponse.json()) as BookingResponse;
+    const bookingid = await createBookingWithPayload(bookingService, original);
 
     const updated = BookingFactory.createUpdate();
     const putResponse = await bookingService.updateBookingWithBasicAuth(
@@ -252,9 +230,7 @@ test.describe('Booking - PartialUpdateBooking (PATCH)', () => {
     await allure.severity('critical');
 
     const original = BookingFactory.createDefault();
-    const createResponse = await bookingService.createBooking(original);
-    expect(createResponse.status()).toBe(200);
-    const { bookingid } = (await createResponse.json()) as BookingResponse;
+    const bookingid = await createBookingWithPayload(bookingService, original);
 
     const patch = { firstname: 'UpdatedFirst', lastname: 'UpdatedLast' };
     const patchResponse = await authenticatedBookingService.partialUpdateBooking(bookingid, patch);
@@ -284,9 +260,7 @@ test.describe('Booking - DeleteBooking', () => {
     await allure.severity('critical');
 
     const booking = BookingFactory.createRandom();
-    const createResponse = await bookingService.createBooking(booking);
-    expect(createResponse.status()).toBe(200);
-    const { bookingid } = (await createResponse.json()) as BookingResponse;
+    const bookingid = await createBookingWithPayload(bookingService, booking);
 
     const deleteResponse = await authenticatedBookingService.deleteBooking(bookingid);
     expect(deleteResponse.status()).toBe(201);
@@ -305,9 +279,7 @@ test.describe('Booking - DeleteBooking', () => {
     await allure.severity('normal');
 
     const booking = BookingFactory.createRandom();
-    const createResponse = await bookingService.createBooking(booking);
-    expect(createResponse.status()).toBe(200);
-    const { bookingid } = (await createResponse.json()) as BookingResponse;
+    const bookingid = await createBookingWithPayload(bookingService, booking);
 
     const deleteResponse = await authenticatedBookingService.deleteBookingWithBasicAuth(
       bookingid,

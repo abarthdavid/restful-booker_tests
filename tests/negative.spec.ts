@@ -2,7 +2,8 @@ import { allure } from 'allure-playwright';
 import { test, expect } from '../src/fixtures/test.fixture';
 import { BookingFactory } from '../src/factories/booking.factory';
 import { AuthFactory } from '../src/factories/auth.factory';
-import { BookingResponse } from '../src/types/booking.types';
+import { createBooking } from '../src/utils/booking.helper';
+import { createBookingWithPayload } from '../src/utils/booking.assertion';
 
 /**
  * Negative test scenarios explore edge cases, invalid inputs,
@@ -21,20 +22,17 @@ test.describe('Negative - Authentication', () => {
     await allure.story('Invalid token for PUT');
     await allure.severity('critical');
 
-    const booking = BookingFactory.createDefault();
-    const createResponse = await bookingService.createBooking(booking);
-    expect(createResponse.status()).toBe(200);
-    const { bookingid } = (await createResponse.json()) as BookingResponse;
+    const { created } = await createBooking(bookingService);
 
     const updateResponse = await bookingService.updateBookingWithToken(
-      bookingid,
+      created.bookingid,
       BookingFactory.createUpdate(),
       'invalidtoken',
     );
     expect(updateResponse.status()).toBe(403);
 
     // Cleanup with basic auth
-    await bookingService.deleteBookingWithBasicAuth(bookingid, basicAuthHeader);
+    await bookingService.deleteBookingWithBasicAuth(created.bookingid, basicAuthHeader);
   });
 
   test('should not delete booking without authentication', async ({
@@ -45,9 +43,7 @@ test.describe('Negative - Authentication', () => {
     await allure.severity('critical');
 
     const booking = BookingFactory.createRandom();
-    const createResponse = await bookingService.createBooking(booking);
-    expect(createResponse.status()).toBe(200);
-    const { bookingid } = (await createResponse.json()) as BookingResponse;
+    const bookingid = await createBookingWithPayload(bookingService, booking);
 
     const deleteResponse = await bookingService.deleteBookingWithoutAuth(bookingid);
     expect(deleteResponse.status()).toBe(403);
@@ -62,21 +58,18 @@ test.describe('Negative - Authentication', () => {
     await allure.story('Wrong Basic Auth for update');
     await allure.severity('normal');
 
-    const booking = BookingFactory.createDefault();
-    const createResponse = await bookingService.createBooking(booking);
-    expect(createResponse.status()).toBe(200);
-    const { bookingid } = (await createResponse.json()) as BookingResponse;
+    const { created } = await createBooking(bookingService);
 
     const wrongAuth = AuthFactory.toBasicAuthHeader(AuthFactory.createWrongPasswordCredentials());
     const updateResponse = await bookingService.updateBookingWithBasicAuth(
-      bookingid,
+      created.bookingid,
       BookingFactory.createUpdate(),
       wrongAuth,
     );
     expect(updateResponse.status()).toBe(403);
 
     await bookingService.deleteBookingWithBasicAuth(
-      bookingid,
+      created.bookingid,
       AuthFactory.toBasicAuthHeader(AuthFactory.createValidCredentials()),
     );
   });
@@ -178,9 +171,7 @@ test.describe('Negative - Data Integrity', () => {
     await allure.severity('normal');
 
     const booking = BookingFactory.createRandom();
-    const createResponse = await bookingService.createBooking(booking);
-    expect(createResponse.status()).toBe(200);
-    const { bookingid } = (await createResponse.json()) as BookingResponse;
+    const bookingid = await createBookingWithPayload(bookingService, booking);
 
     await authenticatedBookingService.deleteBooking(bookingid);
 
@@ -199,9 +190,7 @@ test.describe('Negative - Data Integrity', () => {
     await allure.severity('normal');
 
     const booking = BookingFactory.createRandom();
-    const createResponse = await bookingService.createBooking(booking);
-    expect(createResponse.status()).toBe(200);
-    const { bookingid } = (await createResponse.json()) as BookingResponse;
+    const bookingid = await createBookingWithPayload(bookingService, booking);
 
     const firstDelete = await authenticatedBookingService.deleteBooking(bookingid);
     expect(firstDelete.status()).toBe(201);
