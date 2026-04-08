@@ -4,7 +4,6 @@ allure-results/
 allure-report/
 playwright-report/
 node_modules/
-.husky
 test-results/
 .env
 .env.*
