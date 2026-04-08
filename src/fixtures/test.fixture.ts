@@ -3,6 +3,17 @@ import { PlaywrightHttpClient } from '../services/http-client';
 import { AuthService } from '../services/auth.service';
 import { BookingService } from '../services/booking.service';
 import { AUTH_CREDENTIALS, BASIC_AUTH_HEADER } from '../config/api.config';
+import { cleanupTrackedBookings } from '../utils/booking.helper';
+
+/**
+ * Provides booking ID tracking and automatic cleanup after each test.
+ */
+export interface BookingTracker {
+  /** Registers a booking ID for automatic cleanup after the test. */
+  track: (bookingId: number) => void;
+  /** Removes a booking ID from the cleanup list (e.g. when already deleted in the test). */
+  untrack: (bookingId: number) => void;
+}
 
 export interface BookingFixtures {
   authService: AuthService;
@@ -11,6 +22,7 @@ export interface BookingFixtures {
   authToken: string;
   basicAuthHeader: string;
   apiRequest: APIRequestContext;
+  bookingTracker: BookingTracker;
 }
 
 /**
@@ -47,6 +59,20 @@ export const test = base.extend<BookingFixtures>({
   authenticatedBookingService: async ({ request, authToken }, use) => {
     const client = new PlaywrightHttpClient(request);
     await use(new BookingService(client, authToken));
+  },
+
+  bookingTracker: async ({ authenticatedBookingService }, use) => {
+    const createdBookingIds: number[] = [];
+    await use({
+      track: (id) => createdBookingIds.push(id),
+      untrack: (id) => {
+        const index = createdBookingIds.indexOf(id);
+        if (index !== -1) createdBookingIds.splice(index, 1);
+      },
+    });
+    await cleanupTrackedBookings(createdBookingIds, (id) =>
+      authenticatedBookingService.deleteBooking(id),
+    );
   },
 });
 

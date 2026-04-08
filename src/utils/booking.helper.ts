@@ -3,6 +3,34 @@ import { BookingFactory } from '../factories/booking.factory';
 import { BookingResponse, Booking } from '../types/booking.types';
 import { BookingService } from '../services/booking.service';
 
+const CLEANUP_SUCCESS_STATUSES = [200, 201] as const;
+
+/**
+ * Deletes all tracked booking IDs using the provided delete function.
+ * Accepts 200 and 201 as successful cleanup statuses.
+ *
+ * @param createdBookingIds - Array of booking IDs to clean up.
+ * @param deleteBooking - Function that performs the deletion and returns a response.
+ * @throws Error if a deletion returns an unexpected status code.
+ */
+export async function cleanupTrackedBookings(
+  createdBookingIds: number[],
+  deleteBooking: (id: number) => Promise<{ status(): number }>,
+): Promise<void> {
+  for (const bookingId of createdBookingIds) {
+    const response = await deleteBooking(bookingId);
+    if (
+      !CLEANUP_SUCCESS_STATUSES.includes(
+        response.status() as (typeof CLEANUP_SUCCESS_STATUSES)[number],
+      )
+    ) {
+      throw new Error(
+        `Cleanup failed for booking ${bookingId}. Received status: ${response.status()}`,
+      );
+    }
+  }
+}
+
 /**
  * Deletes a booking by ID and asserts that the operation succeeds.
  * Throws an error if the deletion request returns an unexpected status.
