@@ -4,6 +4,9 @@ import { BookingBuilder } from '../builders/booking.builder';
 
 /**
  * Formats a Date to the YYYY-MM-DD string required by the API.
+ *
+ * @param date - The date to format.
+ * @returns A string in YYYY-MM-DD format.
  */
 function formatDate(date: Date): string {
   return date.toISOString().split('T')[0];
@@ -16,7 +19,10 @@ function formatDate(date: Date): string {
  */
 export class BookingFactory {
   /**
-   * Creates a booking with fully randomised data.
+   * Creates a booking with fully randomised data using Faker.js.
+   * Useful for testing with varied, realistic test data.
+   *
+   * @returns A Booking object populated with random values.
    */
   static createRandom(): Booking {
     const checkin = faker.date.future({ years: 1 });
@@ -36,7 +42,10 @@ export class BookingFactory {
   }
 
   /**
-   * Creates a booking with known, deterministic data for assertions.
+   * Creates a booking with known, deterministic data for assertions and testing.
+   * Useful for predictable test scenarios where exact values are needed.
+   *
+   * @returns A Booking object with fixed test values (Jim Brown, $111, etc.).
    */
   static createDefault(): Booking {
     return new BookingBuilder()

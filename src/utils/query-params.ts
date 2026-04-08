@@ -1,5 +1,9 @@
 /**
- * Converts an optional filter object to query params by removing undefined/empty values.
+ * Converts an optional filter object to query parameters by removing undefined and empty values.
+ * Useful for building optional query strings for API requests.
+ *
+ * @param filter - The optional filter object with string values.
+ * @returns An object with string keys and values, or undefined if no valid params exist.
  */
 export function toQueryParams<T extends object>(filter?: T): Record<string, string> | undefined {
   if (!filter) return undefined;
